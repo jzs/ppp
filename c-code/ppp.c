@@ -105,8 +105,13 @@ char * RetrievePasscodes( OneTwoEight firstPasscodeNumber,
 	char c = alphabet[j];
 	*(alphabet+j) = *(alphabet+i);
 	*(alphabet+i) = c;
-      }
+	  }
     }
+  }
+
+  int bob;
+  for (bob = 0; bob < alphabetLength; bob++) {
+ 	printf("%c", alphabet[bob]);
   }
 
 #define KEY_BITS (int)256
@@ -133,11 +138,14 @@ char * RetrievePasscodes( OneTwoEight firstPasscodeNumber,
 
   while ( passcodeCount > 0 ) {
  	  printf("plain value: %llu \n", plain.sixtyfour.low);
-   	  rijndaelEncrypt( rk, nrounds, (Byte *)&plain.sixtyfour.low, (Byte *)&cipher );
+	  Byte *bb = (Byte *)&plain.sixtyfour.low;
+	  printf("%c", bb);
+	  rijndaelEncrypt( rk, nrounds, (Byte *)&plain.sixtyfour.low, (Byte *)&cipher );
 	inc( &plain );
 	printf("\n Cipher: ");
 	int bob;
 	for (bob = 0; bob < 16; bob++) {
+		printf("'%d'", bob);
 		printf("%x", cipher.byte[bob]);
 	}
 	printf("/n");

@@ -49,3 +49,54 @@
 //  8: CN4: umAr aG5j 3z:X kAEH FPKY L!qt
 //  9: fxn2 fWgk AENU zJTq jowD oEZP @wpV
 // 10: B=at !fev bgGW oH#A gNVd K8XU 2U=o
+package ppp
+
+import (
+	"testing"
+	"fmt"
+	"math/big"
+)
+
+func TestGetPasscode(t *testing.T) {
+	sequencekey := "9A6BE8449580E310FCF4748CEDE5593B861E1684B498E9885854C55DD65FBCD1"
+	alphabet := "!#%+23456789:=?@ABCDEFGHJKLMNPRS" +
+		"TUVWXYZabcdefghijkmnopqrstuvwxyz"
+	bigint := big.NewInt(0)
+	ppp := NewPpp(sequencekey, alphabet, 4)
+	passcode := ppp.GetPasscode(bigint)
+	if passcode != "AWmL" {
+		fmt.Printf("Passcode: %s != AWmL", passcode)
+	}
+}
+/*
+func TestGenerateSequenceKeyFromString(t *testing.T) {
+	sequenceString := ""
+	sequenceKey := GenerateSequenceKeyFromString(sequenceString)
+	if sequenceKey != "" {
+		t.Error("Sequence key does not match expected result")
+	}
+}
+
+func TestGenerateRandomSequenceKey(t *testing.T) {
+	//TODO: One would have to do distribution analysis to prove the correctness of this.
+}
+
+func TestGetPasscodes(t *testing.T) {
+	sequencekey := "66F24B34AE4D26DADA87ABF799B247AABE389D5E02E08622D9E0F70C6A44E061"
+	alphabet := "!#%+23456789:=?@ABCDEFGHJKLMNPRS" +
+		"TUVWXYZabcdefghijkmnopqrstuvwxyz"
+	firstPasscode := 0
+	count := 70
+	passcodeLength := 4
+
+	passcodes := RetrievePasscodes(firstPasscode, count, sequencekey,
+		alphabet, passcodeLength)
+
+	if len(passcodes) != 70 {
+		t.Error("Passcodes length must be 70")
+	}
+	if passcodes[0] != "AWmL" {
+		t.Error("First passcode does not match.")
+	}
+}
+*/

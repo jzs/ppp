@@ -8,12 +8,14 @@ import (
 	"math/big"
 )
 
+/*
 type OneTwoEight struct {
 	Big *big.Int
 	low uint64
 	high uint64
 	Byte [16]byte
 }
+*/
 
 type SequenceKey struct {
 	Byte []byte
@@ -27,6 +29,7 @@ func RetrievePasscodes(firstPasscodeNumber *big.Int, passcodeCount int, sequence
 	passcodeList := make([]string, passcodeCount)
 
 	// Bubblesort the alphabet...
+/*
 	for i := 0; i < alphabetLength; i++ {
 		for j := 0; j < alphabetLength; j++ {
 			if alphabet[i] > alphabet[j] {
@@ -36,6 +39,7 @@ func RetrievePasscodes(firstPasscodeNumber *big.Int, passcodeCount int, sequence
 			}
 		}
 	}
+*/
 	fmt.Printf("Alphabet lenght: %d \n", len(alphabet))
 
 	// Copy the key c-style
@@ -63,7 +67,16 @@ func RetrievePasscodes(firstPasscodeNumber *big.Int, passcodeCount int, sequence
 			}
 		}
 		fmt.Printf("PlainBytes: %x \n", plainBytes)
+		fmt.Printf("cipher: %x\n", cipher)
 		block.Encrypt(cipher, plainBytes)
+		fmt.Printf("cipher: %x\n", cipher)
+
+		ncip := make([]byte, len(cipher))
+		adjust := len(cipher) - 1
+		for i := 0; i < len(cipher); i++ {
+			ncip[i] = cipher[adjust -i]
+		}
+		cipher = ncip
 
 		plain = plain.Add(big.NewInt(1), plain)
 		bCipher = bCipher.SetBytes(cipher)
@@ -107,8 +120,8 @@ func main() {
 	passphrase := "bob"
 	sequenceKey := "deaad4ffca90ecc50b7b0d50f6fd16ae7e6aa4584d7f2349af8ac94d9e7de155"
 	offset := 1
-	count := 1
-	alphabet := "!#%+23456789=:?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	count := 4
+	alphabet := "!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 	length := 4
 
 	var key SequenceKey
