@@ -1,8 +1,4 @@
-RetrievePasscodes(charbuffer, firstpasscodenum, passcodecount, sequencekey, characterset, passcodelength)
+# Perfect Paper Passwords
 
-generaterandomsequencekey(sequencekeybuffer)
-
-convertasciito128bitdecimal(binarybuffer, asciistring)
-returns 1,0,-1,-2
-
+A PPP implementation in go based on John Graham-Cumming's C implementation of Steve Gibsons (https://www.grc.com/ppp.htm)[https://www.grc.com/ppp.htm] PPP algorithm.
 

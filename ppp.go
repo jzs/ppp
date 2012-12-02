@@ -1,163 +1,109 @@
-package main
+package ppp
 
 import (
-	"encoding/hex"
-	"crypto/sha256"
-	"fmt"
 	"crypto/aes"
+	"crypto/sha256"
+	"encoding/hex"
 	"math/big"
 )
 
-/*
-type OneTwoEight struct {
-	Big *big.Int
-	low uint64
-	high uint64
-	Byte [16]byte
-}
-*/
-
-type SequenceKey struct {
-	Byte []byte
+type Ppp struct {
+	sequenceKey    []byte
+	alphabet       string
+	passcodeLength int
+	codesPerCard   int
 }
 
-func RetrievePasscodes(firstPasscodeNumber *big.Int, passcodeCount int, sequenceKey *SequenceKey, sourceAlphabet string, passcodeLength int) []string {
+func NewPpp(sequenceKey []byte, alphabet string, passcodeLength, codesPerCard int) *Ppp {
+	return &Ppp{sequenceKey, alphabet, passcodeLength, codesPerCard}
+}
 
+func ConvertHexToKey(sequenceKey string) ([]byte, error) {
+	s, err := hex.DecodeString(sequenceKey)
+	if err != nil {
+		return nil, err
+	}
+	key := []byte(s)
+	return key, nil
+}
+
+func GenerateSequenceKeyFromString(passPhrase string) []byte {
+	hash := sha256.New()
+	hash.Write([]byte(passPhrase))
+	return hash.Sum(nil)
+}
+
+func (ppp *Ppp) GetPasscode(num *big.Int) string {
+	passcodes := ppp.retrievePasscodes(num, 1, ppp.sequenceKey, ppp.alphabet, ppp.passcodeLength)
+	return passcodes[0]
+}
+
+func (ppp *Ppp) GetPasscodes(firstPasscode *big.Int, count int) []string {
+	return ppp.retrievePasscodes(firstPasscode, count, ppp.sequenceKey, ppp.alphabet, ppp.passcodeLength)
+}
+
+func (ppp *Ppp) retrievePasscodes(firstPasscodeNumber *big.Int, passcodeCount int, sequenceKey []byte, sourceAlphabet string, passcodeLength int) []string {
 	alphabetLength := len(sourceAlphabet)
 	alphabet := []byte(sourceAlphabet)
 
-	passcodeList := make([]string, passcodeCount)
+	var passcodeList []string
 
 	// Bubblesort the alphabet...
-/*
 	for i := 0; i < alphabetLength; i++ {
 		for j := 0; j < alphabetLength; j++ {
-			if alphabet[i] > alphabet[j] {
+			if alphabet[i] < alphabet[j] {
 				c := alphabet[j]
 				alphabet[j] = alphabet[i]
 				alphabet[i] = c
 			}
 		}
 	}
-*/
-	fmt.Printf("Alphabet lenght: %d \n", len(alphabet))
 
-	// Copy the key c-style
-	key := make([]byte, len(sequenceKey.Byte))
-	for i := 0; i < len(sequenceKey.Byte); i++ {
-		key[i] = sequenceKey.Byte[i]
+	// Copy the key
+	key := sequenceKey
+
+	plain := firstPasscodeNumber    // What to encrypt essencially based on the key.
+	passcodeCount *= passcodeLength // How many characters should we compute.
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil
 	}
-
-	plain := firstPasscodeNumber // What to encrypt essencially based on the key.
-	passcodeCount *= passcodeLength
-
-	fmt.Printf("KEY: %x", key)
-	block, err := aes.NewCipher(key); if err != nil { return nil }
 
 	cipher := make([]byte, block.BlockSize()) // The encrypted cipher.
 	bCipher := big.NewInt(0)
 
 	for passcodeCount > 0 { // For each passcode that we need to generate.
 		plainBytes := make([]byte, 16)
-		for i, _ := range(plainBytes) {
+		for i, _ := range plainBytes {
 			if i < len(plain.Bytes()) {
 				plainBytes[i] = plain.Bytes()[i]
 			} else {
 				break
 			}
 		}
-		fmt.Printf("PlainBytes: %x \n", plainBytes)
-		fmt.Printf("cipher: %x\n", cipher)
 		block.Encrypt(cipher, plainBytes)
-		fmt.Printf("cipher: %x\n", cipher)
 
+		// Swap bytes
 		ncip := make([]byte, len(cipher))
 		adjust := len(cipher) - 1
 		for i := 0; i < len(cipher); i++ {
-			ncip[i] = cipher[adjust -i]
+			ncip[i] = cipher[adjust-i]
 		}
 		cipher = ncip
 
-		plain = plain.Add(big.NewInt(1), plain)
-		bCipher = bCipher.SetBytes(cipher)
+		plain = plain.Add(big.NewInt(1), plain) // Prepare for next character.
+		bCipher = bCipher.SetBytes(cipher)      // Bye cipher
 
 		index := big.NewInt(0)
 
-		fmt.Printf("Cipher: %x \n", cipher)
-		fmt.Println("Looping: \n")
 		passcode := make([]byte, passcodeLength)
 		for i := 0; i < passcodeLength && passcodeCount > 0; i++ {
-			fmt.Printf("Cipher Before: %x \n", bCipher.Bytes())
 			bCipher, index = bCipher.DivMod(bCipher, big.NewInt(int64(alphabetLength)), big.NewInt(1))
-			fmt.Printf("Alphabet Length: %d\n", len(alphabet))
-			fmt.Println(index.Int64())
 			passcode[i] = alphabet[index.Int64()]
-
 			passcodeCount--
 		}
 		passcodeList = append(passcodeList, string(passcode))
 	}
 	return passcodeList
-}
-
-func GenerateRandomSequenceKey(key *SequenceKey) {
-	key.Byte = []byte("deaad4ffca90ecc50b7b0d50f6fd16ae7e6aa4584d7f2349af8ac94d9e7de155")
-}
-
-func ConvertHexToKey(sequenceKey string, key *SequenceKey) bool {
-	s, err := hex.DecodeString(sequenceKey); if err != nil { return false }
-	key.Byte = []byte(s)
-	return true
-}
-
-func GenerateSequenceKeyFromString(passPhrase string, key *SequenceKey) {
-	hash := sha256.New()
-	key.Byte = hash.Sum([]byte(passPhrase))
-	return
-}
-
-func main() {
-	passphrase := "bob"
-	sequenceKey := "deaad4ffca90ecc50b7b0d50f6fd16ae7e6aa4584d7f2349af8ac94d9e7de155"
-	offset := 1
-	count := 4
-	alphabet := "!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-	length := 4
-
-	var key SequenceKey
-
-	if(len(passphrase) == 0) {
-		fmt.Println("Passphrase is empty. Generating random sequence key")
-		GenerateRandomSequenceKey( &key)
-	} else {
-		if(len(sequenceKey) == 64 && ConvertHexToKey(sequenceKey, &key)) {
-			fmt.Println("Using entered sequence key\n")
-		} else {
-			fmt.Println("Generating sequence key from passphrase\n")
-			GenerateSequenceKeyFromString(passphrase, &key)
-		}
-	}
-	fmt.Println("Sequence Key: ");
-
-	fmt.Printf("%x\n", key.Byte)
-
-	for i:= 0; i < len(key.Byte); i++ {
-		fmt.Printf("0x%X,", key.Byte[i])
-	}
-	fmt.Printf("\n");
-
-	//Computing passcodes-----------------------------
-
-	firstPasscode := big.NewInt(int64(offset))
-
-	fmt.Printf("Using alphabet: %s\n", alphabet)
-
-	fmt.Printf("Passcode length: %d\n", length)
-
-	pcl := RetrievePasscodes(firstPasscode, count, &key, alphabet, length)
-
-	for _, s := range(pcl) {
-		fmt.Printf("%s ", s)
-	}
-	fmt.Printf("\n")
 }
