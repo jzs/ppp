@@ -14,10 +14,13 @@ type Ppp struct {
 	codesPerCard   int
 }
 
+// NewPpp creates a new perfect paper passwords struct based on the given
+// sequence key, alphabet and passcodeLength.
 func NewPpp(sequenceKey []byte, alphabet string, passcodeLength, codesPerCard int) *Ppp {
 	return &Ppp{sequenceKey, alphabet, passcodeLength, codesPerCard}
 }
 
+// ConvertHexToKey converts a hex string into a byte array.
 func ConvertHexToKey(sequenceKey string) ([]byte, error) {
 	s, err := hex.DecodeString(sequenceKey)
 	if err != nil {
@@ -27,17 +30,21 @@ func ConvertHexToKey(sequenceKey string) ([]byte, error) {
 	return key, nil
 }
 
+// GenerateSequenceKeyFromString procudes a valid sequenceKey(sha hash) based 
+// on a passPhrase.
 func GenerateSequenceKeyFromString(passPhrase string) []byte {
 	hash := sha256.New()
 	hash.Write([]byte(passPhrase))
 	return hash.Sum(nil)
 }
 
+// GetPasscode returns passcode num.
 func (ppp *Ppp) GetPasscode(num *big.Int) string {
 	passcodes := ppp.retrievePasscodes(num, 1, ppp.sequenceKey, ppp.alphabet, ppp.passcodeLength)
 	return passcodes[0]
 }
 
+// GetPasscodes Retrieves a range of passcodes from firstPasscode.
 func (ppp *Ppp) GetPasscodes(firstPasscode *big.Int, count int) []string {
 	return ppp.retrievePasscodes(firstPasscode, count, ppp.sequenceKey, ppp.alphabet, ppp.passcodeLength)
 }
