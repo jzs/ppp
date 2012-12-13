@@ -54,6 +54,8 @@ package ppp
 import (
 	"math/big"
 	"testing"
+	"encoding/hex"
+	"bytes"
 )
 
 func TestGetPasscode(t *testing.T) {
@@ -77,7 +79,13 @@ func TestGetPasscode(t *testing.T) {
 
 func TestGenerateSequenceKeyFromString(t *testing.T) {
 	sequenceKey := GenerateSequenceKeyFromString("bob")
-	fmt.Printf("%x \n", sequenceKey)
+	h, _ := hex.DecodeString("81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9")
+	if bytes.Compare(sequenceKey, h) != 0 {
+		t.Error("Generated sequenceKey doesn't match")
+	}
+	h, _ = hex.DecodeString("77af778b51abd4a3c51c5ddd97204a9c3ae614ebccb75a606c3b6865aed6744e")
 	sequenceKeyT := GenerateSequenceKeyFromString("cat")
-	fmt.Printf("%x", sequenceKeyT)
+	if bytes.Compare(sequenceKeyT, h) != 0 {
+		t.Error("Generated sequenceKey doesn't match")
+	}
 }
